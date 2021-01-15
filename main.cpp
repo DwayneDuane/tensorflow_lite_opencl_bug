@@ -21,7 +21,7 @@ int main(int argc, char** argv)
     std::cout << "total data size: " << numberlist.size() << std::endl;
 
     try {
-
+	//To run with GPU delegate, change Model<CPUDelegate> to Model<GPUDelegate>
         Model<CPUDelegate> model("./dummy.tflite");
         model.Connect("Identity", "a");
         model.Connect("Identity_2", "a_1");
