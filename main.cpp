@@ -21,21 +21,20 @@ int main(int argc, char** argv)
     std::cout << "total data size: " << numberlist.size() << std::endl;
 
     try {
-	//To run with GPU delegate, change Model<CPUDelegate> to Model<GPUDelegate>
-        Model<CPUDelegate> model("./dummy.tflite");
+        Model model("./dummy.tflite");
         model.Connect("Identity", "a");
         model.Connect("Identity_2", "a_1");
 
         constexpr int input_1_size = 100;
 
-        auto DisplayResult = [&model](std::string const& name, int i)
-        {
+        auto DisplayResult = [&model](std::string const& name, int i) {
             auto output = model.GetOutput(name);
 
-            std::cout << "Iter: " << i << " "<<name<<std::endl;
+            std::cout << "Iter: " << i << " " << name << std::endl;
             for (auto v : output)
                 std::cout << v << " ";
-            std::cout <<std::endl<<"--------------------------"<<std::endl;
+            std::cout << std::endl
+                      << "--------------------------" << std::endl;
         };
 
         for (int i = 0; i < numberlist.size() / input_1_size; ++i) {
@@ -46,8 +45,8 @@ int main(int argc, char** argv)
 
             DisplayResult("Identity", i);
             DisplayResult("Identity_1", i);
-            DisplayResult("Identity_2", i); 
-            std::cout <<"**************************"<<std::endl;
+            DisplayResult("Identity_2", i);
+            std::cout << "**************************" << std::endl;
         }
     } catch (std::runtime_error& e) {
         std::cerr << e.what() << std::endl;

@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 message(WARNING $ENV{TF_ROOT})
 
-find_library(TENSORFLOW_LIB tensorflowlite HINT $ENV{TF_ROOT}/lib/${CMAKE_SYSTEM_PROCESSOR} NO_CMAKE_FIND_ROOT_PATH)
+find_library(TENSORFLOW_LIB tensorflowlite_c HINT $ENV{TF_ROOT}/lib/${CMAKE_SYSTEM_PROCESSOR} NO_CMAKE_FIND_ROOT_PATH)
 find_library(TENSORFLOW_GPU_DELEGATE tensorflowlite_gpu_delegate HINT $ENV{TF_ROOT}/lib/${CMAKE_SYSTEM_PROCESSOR} NO_CMAKE_FIND_ROOT_PATH)
 
 add_executable(tflite_test main.cpp)
