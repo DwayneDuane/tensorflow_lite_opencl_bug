@@ -1,6 +1,6 @@
 #include "tensorflow/lite/c/c_api.h"
-#include "tensorflow/lite/c/c_api_experimental.h"
 #include "tensorflow/lite/delegates/gpu/delegate.h"
+#include "tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h"
 
 #include <algorithm>
 #include <chrono>
@@ -46,12 +46,20 @@ public:
         : mOptions { TfLiteInterpreterOptionsCreate(), TfLiteInterpreterOptionsDeleter {} }
         , mModel { TfLiteModelCreateFromFile(tfliteModelFileName.c_str()), TfLiteModelDeleter {} }
         , mInterpreter { nullptr, TfLiteInterpreterDeleter {} }
+        , mXNNPackDelegate { nullptr, XNNPACKDelegateDeleter {} }
     {
         if (mModel == nullptr)
             throw std::runtime_error("Unable to load tflite model");
 
-        TfLiteInterpreterOptionsSetNumThreads(mOptions.get(), 1);
-        TfLiteInterpreterOptionsSetUseNNAPI(mOptions.get(), true);
+        //Enable XNNPack delegate
+        TfLiteXNNPackDelegateOptions xnnpackOpts = TfLiteXNNPackDelegateOptionsDefault();
+        //xnnpackOpts.num_threads = 1;
+        mXNNPackDelegate.reset(TfLiteXNNPackDelegateCreate(&xnnpackOpts));
+        if (mXNNPackDelegate == nullptr)
+            throw std::runtime_error("Unable to initialized xnnpack delegate");
+
+        TfLiteInterpreterOptionsAddDelegate(mOptions.get(), mXNNPackDelegate.get());
+
         //Call to TfLiteInterpreterOptionsAddDelegate goes here.
         mInterpreter.reset(TfLiteInterpreterCreate(mModel.get(), mOptions.get()));
 
@@ -152,9 +160,18 @@ private:
         }
     };
 
+    struct XNNPACKDelegateDeleter {
+        void operator()(TfLiteDelegate* delegate) const noexcept
+        {
+            if (delegate)
+                TfLiteXNNPackDelegateDelete(delegate);
+        }
+    };
+
     std::unique_ptr<TfLiteInterpreterOptions, TfLiteInterpreterOptionsDeleter> mOptions;
     std::unique_ptr<TfLiteModel, TfLiteModelDeleter> mModel;
     std::unique_ptr<TfLiteInterpreter, TfLiteInterpreterDeleter> mInterpreter;
+    std::unique_ptr<TfLiteDelegate, XNNPACKDelegateDeleter> mXNNPackDelegate;
 
     struct TFLiteIODetail {
         TFLiteIODetail(TfLiteTensor const* tensor)

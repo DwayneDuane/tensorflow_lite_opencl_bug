@@ -21,9 +21,10 @@ int main(int argc, char** argv)
     std::cout << "total data size: " << numberlist.size() << std::endl;
 
     try {
-        Model model("./dummy.tflite");
+        Model model("./decomposed.tflite");
         model.Connect("Identity", "a");
-        model.Connect("Identity_2", "a_1");
+        model.Connect("Identity_1", "a_1");
+        model.Connect("Identity_2", "a_2");
 
         constexpr int input_1_size = 100;
 
@@ -40,11 +41,11 @@ int main(int argc, char** argv)
         for (int i = 0; i < numberlist.size() / input_1_size; ++i) {
             std::vector<float> input_1(numberlist.begin() + i * input_1_size,
                 numberlist.begin() + (i + 1) * input_1_size);
-            model.FillInput("a_2", input_1);
+            model.FillInput("a_3", input_1);
             model.Forward();
 
-            DisplayResult("Identity", i);
-            DisplayResult("Identity_1", i);
+            //DisplayResult("Identity", i);
+            //DisplayResult("Identity_1", i);
             DisplayResult("Identity_2", i);
             std::cout << "**************************" << std::endl;
         }
