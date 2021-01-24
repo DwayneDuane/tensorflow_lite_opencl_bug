@@ -43,11 +43,17 @@ private:
 
 public:
     Model(std::string tfliteModelFileName)
-        : mOptions { TfLiteInterpreterOptionsCreate(), TfLiteInterpreterOptionsDeleter {} }
-        , mModel { TfLiteModelCreateFromFile(tfliteModelFileName.c_str()), TfLiteModelDeleter {} }
+        : mModel { TfLiteModelCreateFromFile(tfliteModelFileName.c_str()), TfLiteModelDeleter {} }
         , mInterpreter { nullptr, TfLiteInterpreterDeleter {} }
         , mXNNPackDelegate { nullptr, XNNPACKDelegateDeleter {} }
     {
+        auto TfLiteInterpreterOptionsDeleter = [](TfLiteInterpreterOptions* opts) {
+            if (opts)
+                TfLiteInterpreterOptionsDelete(opts);
+        };
+
+        std::unique_ptr<TfLiteInterpreterOptions, decltype(TfLiteInterpreterOptionsDeleter)> options(TfLiteInterpreterOptionsCreate(), TfLiteInterpreterOptionsDeleter);
+
         if (mModel == nullptr)
             throw std::runtime_error("Unable to load tflite model");
 
@@ -58,10 +64,10 @@ public:
         if (mXNNPackDelegate == nullptr)
             throw std::runtime_error("Unable to initialized xnnpack delegate");
 
-        TfLiteInterpreterOptionsAddDelegate(mOptions.get(), mXNNPackDelegate.get());
+        TfLiteInterpreterOptionsAddDelegate(options.get(), mXNNPackDelegate.get());
 
         //Call to TfLiteInterpreterOptionsAddDelegate goes here.
-        mInterpreter.reset(TfLiteInterpreterCreate(mModel.get(), mOptions.get()));
+        mInterpreter.reset(TfLiteInterpreterCreate(mModel.get(), options.get()));
 
         if (mInterpreter == nullptr)
             throw std::runtime_error("Unable to create interpreter");
@@ -136,14 +142,6 @@ public:
     }
 
 private:
-    struct TfLiteInterpreterOptionsDeleter {
-        void operator()(TfLiteInterpreterOptions* opts) const noexcept
-        {
-            if (opts)
-                TfLiteInterpreterOptionsDelete(opts);
-        }
-    };
-
     struct TfLiteModelDeleter {
         void operator()(TfLiteModel* model) const noexcept
         {
@@ -168,7 +166,6 @@ private:
         }
     };
 
-    std::unique_ptr<TfLiteInterpreterOptions, TfLiteInterpreterOptionsDeleter> mOptions;
     std::unique_ptr<TfLiteModel, TfLiteModelDeleter> mModel;
     std::unique_ptr<TfLiteInterpreter, TfLiteInterpreterDeleter> mInterpreter;
     std::unique_ptr<TfLiteDelegate, XNNPACKDelegateDeleter> mXNNPackDelegate;
