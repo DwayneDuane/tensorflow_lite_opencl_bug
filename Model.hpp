@@ -1,4 +1,5 @@
 #include "tensorflow/lite/c/c_api.h"
+#include "tensorflow/lite/c/c_api_experimental.h"
 #include "tensorflow/lite/delegates/gpu/delegate.h"
 
 #include <algorithm>
@@ -50,6 +51,7 @@ public:
             throw std::runtime_error("Unable to load tflite model");
 
         TfLiteInterpreterOptionsSetNumThreads(mOptions.get(), 1);
+        TfLiteInterpreterOptionsSetUseNNAPI(mOptions.get(), true);
         //Call to TfLiteInterpreterOptionsAddDelegate goes here.
         mInterpreter.reset(TfLiteInterpreterCreate(mModel.get(), mOptions.get()));
 
